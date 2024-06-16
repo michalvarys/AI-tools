@@ -3,16 +3,17 @@ import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStream
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+
+import { speakText as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
+import { speakText as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
+const speakText = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
 
 import type { DMessage } from '~/common/state/store-chats';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
-
 export const STREAM_TEXT_INDICATOR = '...';
-
 
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
@@ -51,14 +52,13 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     void conversationAutoTitle(conversationId, false);
   }
 
-  if (autoSuggestDiagrams || autoSuggestQuestions)
-    autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
+  if (autoSuggestDiagrams || autoSuggestQuestions) autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
 
   return messageStatus.outcome === 'success';
 }
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
-type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
+type StreamMessageStatus = { outcome: StreamMessageOutcome; errorMessage?: string };
 
 export async function streamAssistantMessage(
   llmId: DLLMId,
@@ -70,7 +70,6 @@ export async function streamAssistantMessage(
   editMessage: (update: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
 ): Promise<StreamMessageStatus> {
-
   const returnStatus: StreamMessageStatus = {
     outcome: 'success',
     errorMessage: undefined,
@@ -82,8 +81,7 @@ export async function streamAssistantMessage(
   // Throttling setup
   let lastCallTime = 0;
   let throttleDelay = 1000 / 12; // 12 messages per second works well for 60Hz displays (single chat, and 24 in 4 chats, see the square root below)
-  if (throttleUnits > 1)
-    throttleDelay = Math.round(throttleDelay * Math.sqrt(throttleUnits));
+  if (throttleUnits > 1) throttleDelay = Math.round(throttleDelay * Math.sqrt(throttleUnits));
 
   function throttledEditMessage(updatedMessage: Partial<DMessage>) {
     const now = Date.now();
@@ -111,8 +109,7 @@ export async function streamAssistantMessage(
       // 📢 TTS: first-line
       if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
         let cutPoint = textSoFar.lastIndexOf('\n');
-        if (cutPoint < 0)
-          cutPoint = textSoFar.lastIndexOf('. ');
+        if (cutPoint < 0) cutPoint = textSoFar.lastIndexOf('. ');
         if (cutPoint > 100 && cutPoint < 400) {
           spokenLine = true;
           const firstParagraph = textSoFar.substring(0, cutPoint);
@@ -128,8 +125,7 @@ export async function streamAssistantMessage(
       incrementalAnswer.text = (incrementalAnswer.text || '') + errorText;
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
-    } else
-      returnStatus.outcome = 'aborted';
+    } else returnStatus.outcome = 'aborted';
   }
 
   // Optimized:

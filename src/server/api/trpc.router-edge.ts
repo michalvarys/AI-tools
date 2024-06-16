@@ -8,6 +8,7 @@ import { llmGeminiRouter } from '~/modules/llms/server/gemini/gemini.router';
 import { llmOllamaRouter } from '~/modules/llms/server/ollama/ollama.router';
 import { llmOpenAIRouter } from '~/modules/llms/server/openai/openai.router';
 import { prodiaRouter } from '~/modules/t2i/prodia/prodia.router';
+import { ttsRouter } from '~/modules/tts/tts.router';
 import { youtubeRouter } from '~/modules/youtube/youtube.router';
 
 /**
@@ -16,6 +17,7 @@ import { youtubeRouter } from '~/modules/youtube/youtube.router';
 export const appRouterEdge = createTRPCRouter({
   backend: backendRouter,
   elevenlabs: elevenlabsRouter,
+  tts: ttsRouter,
   googleSearch: googleSearchRouter,
   llmAnthropic: llmAnthropicRouter,
   llmGemini: llmGeminiRouter,

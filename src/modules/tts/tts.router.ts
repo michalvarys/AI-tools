@@ -5,18 +5,15 @@ import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 export const speechInputSchema = z.object({
-  elevenKey: z.string().optional(),
-  text: z.string(),
-  voiceId: z.string().optional(),
-  nonEnglish: z.boolean(),
-  streaming: z.boolean().optional(),
-  streamOptimization: z.number().optional(),
+  ttsKey: z.string().optional(),
+  input: z.string(),
+  model: z.string().optional(),
 });
 
 export type SpeechInputSchema = z.infer<typeof speechInputSchema>;
 
 const listVoicesInputSchema = z.object({
-  elevenKey: z.string().optional(),
+  ttsKey: z.string().optional(),
 });
 
 const voiceSchema = z.object({
@@ -34,7 +31,7 @@ const listVoicesOutputSchema = z.object({
   voices: z.array(voiceSchema),
 });
 
-export const elevenlabsRouter = createTRPCRouter({
+export const ttsRouter = createTRPCRouter({
   /**
    * List Voices available to this api key
    */
@@ -42,27 +39,23 @@ export const elevenlabsRouter = createTRPCRouter({
     .input(listVoicesInputSchema)
     .output(listVoicesOutputSchema)
     .query(async ({ input }) => {
-      const { elevenKey } = input;
-      const { headers, url } = elevenlabsAccess(elevenKey, '/v1/voices');
+      const { ttsKey } = input;
+      const { headers, url } = ttsAccess(ttsKey, '/v1/models');
 
-      const voicesList = await fetchJsonOrTRPCError<ElevenlabsWire.VoicesList>(url, 'GET', headers, undefined, 'ElevenLabs');
-
-      // bring category != 'premade' to the top
-      voicesList.voices.sort((a, b) => {
-        if (a.category === 'premade' && b.category !== 'premade') return 1;
-        if (a.category !== 'premade' && b.category === 'premade') return -1;
-        return 0;
-      });
+      const voicesList = await fetchJsonOrTRPCError<{ data: TTSWire.VoicesList['voices'] }>(url, 'GET', headers, undefined, 'LocalAI');
+      const voices = voicesList.data
+        .filter((voice) => voice.id.startsWith('voice-en-us-') && !voice.id.endsWith('.gz'))
+        .map((voice, index) => ({
+          id: voice.id,
+          name: voice.id,
+          description: '',
+          previewUrl: '',
+          category: '',
+          default: voice.id === 'voice-en-us-ryan-medium',
+        }));
 
       return {
-        voices: voicesList.voices.map((voice, idx) => ({
-          id: voice.voice_id,
-          name: voice.name,
-          description: voice.description,
-          previewUrl: voice.preview_url,
-          category: voice.category,
-          default: idx === 0,
-        })),
+        voices,
       };
     }),
 
@@ -88,57 +81,41 @@ export const elevenlabsRouter = createTRPCRouter({
     }),*/
 });
 
-export function elevenlabsAccess(elevenKey: string | undefined, apiPath: string): { headers: HeadersInit; url: string } {
+export function ttsAccess(localAIKEy: string | undefined, apiPath: string): { headers: HeadersInit; url: string } {
   // API key
-  elevenKey = (elevenKey || env.ELEVENLABS_API_KEY || '').trim();
-  if (!elevenKey) throw new Error('Missing ElevenLabs API key.');
+  localAIKEy = (localAIKEy || env.LOCALAI_API_KEY || '').trim();
+  //   if (!localAIKEy) throw new Error('Missing ElevenLabs API key.');
 
   // API host
-  let host = (env.ELEVENLABS_API_HOST || 'api.elevenlabs.io').trim();
+  let host = (env.LOCALAI_API_HOST || 'http://localhost:8080').trim();
   if (!host.startsWith('http')) host = `https://${host}`;
   if (host.endsWith('/') && apiPath.startsWith('/')) host = host.slice(0, -1);
 
   return {
     headers: {
       'Content-Type': 'application/json',
-      'xi-api-key': elevenKey,
+      'xi-api-key': localAIKEy,
+      Authorization: `Bearer ${localAIKEy}`,
     },
     url: host + apiPath,
   };
 }
 
-export function elevenlabsVoiceId(voiceId?: string): string {
+export function TTSVoiceId(voiceId?: string): string {
   return voiceId?.trim() || env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
 }
 
 /// This is the upstream API [rev-eng on 2023-04-12]
-export namespace ElevenlabsWire {
+export namespace TTSWire {
   export interface TTSRequest {
-    text: string;
-    model_id?: 'eleven_monolingual_v1' | string;
-    voice_settings?: {
-      stability: number;
-      similarity_boost: number;
-    };
+    input: string;
+    model?: 'voice-en-us-ryan-medium' | string;
   }
 
-  export interface VoicesList {
-    voices: Voice[];
-  }
+  export type VoicesList = { voices: Model[] };
 
-  interface Voice {
-    voice_id: string;
-    name: string;
-    //samples: Sample[];
-    category: string;
-    // fine_tuning: FineTuning;
-    labels: Record<string, string>;
-    description: string;
-    preview_url: string;
-    // available_for_tiers: string[];
-    settings: {
-      stability: number;
-      similarity_boost: number;
-    };
+  interface Model {
+    id: string;
+    object: string;
   }
 }

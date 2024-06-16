@@ -2,8 +2,9 @@ import { NextRequest } from 'next/server';
 
 import { createEmptyReadableStream, nonTrpcServerFetchOrThrow, safeErrorString } from '~/server/wire';
 
-import { elevenlabsAccess, elevenlabsVoiceId, ElevenlabsWire, speechInputSchema } from './elevenlabs.router';
-
+import { ttsAccess, TTSVoiceId, TTSWire, speechInputSchema } from './tts.router';
+// import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+// import { EdgeTTS } from 'node-edge-tts';
 /* NOTE: Why does this file even exist?
 
 This file is a workaround for a limitation in tRPC; it does not support ArrayBuffer responses,
@@ -14,15 +15,35 @@ and client-side vs. the tRPC implementation. So at lease we recycle the input st
 
 */
 
-export async function elevenLabsHandler(req: NextRequest) {
+export async function edgeTTSHandler(req: NextRequest) {
   try {
     // construct the upstream request
-    const { elevenKey, text, voiceId, nonEnglish, streaming, streamOptimization } = speechInputSchema.parse(await req.json());
-    const path = `/v1/text-to-speech/${elevenlabsVoiceId(voiceId)}` + (streaming ? `/stream?optimize_streaming_latency=${streamOptimization || 1}` : '');
-    const { headers, url } = elevenlabsAccess(elevenKey, path);
-    const body: ElevenlabsWire.TTSRequest = {
-      text: text,
-      ...(nonEnglish && { model_id: 'eleven_multilingual_v2' }),
+    const { input, model = 'cs-CZ-AntoninNeural' } = speechInputSchema.parse(await req.json());
+    const voice = model.startsWith('cs-CZ-') ? model : `cs-CZ-AntoninNeural`;
+    // elevenlabs POST
+    const upstreamResponse: Response = await nonTrpcServerFetchOrThrow(`http://edge-tts:8088/tts?text=${input}&voice=${voice}`, 'GET', {}, undefined);
+    const { url } = await upstreamResponse.json();
+    const link = `http://edge-tts:8088${url}`;
+    const buffer = await fetch(link).then((res) => res.arrayBuffer());
+
+    const audioReadableStream = buffer || createEmptyReadableStream();
+    return new Response(audioReadableStream, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
+  } catch (error: any) {
+    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
+    console.log(`api/localai/speech: fetch issue: ${fetchOrVendorError}`);
+    return new Response(`[Issue] elevenlabs: ${fetchOrVendorError}`, { status: 500 });
+  }
+}
+
+export async function TTSHandler(req: NextRequest) {
+  try {
+    // construct the upstream request
+    const { ttsKey, input, model = 'voice-en-us-ryan-medium' } = speechInputSchema.parse(await req.json());
+    const path = `/tts`;
+    const { headers, url } = ttsAccess(ttsKey, path);
+    const body: TTSWire.TTSRequest = {
+      input,
+      model,
     };
 
     // elevenlabs POST
@@ -40,7 +61,7 @@ export async function elevenLabsHandler(req: NextRequest) {
     return new Response(audioReadableStream, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
   } catch (error: any) {
     const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + error.cause : '');
-    console.log(`api/elevenlabs/speech: fetch issue: ${fetchOrVendorError}`);
+    console.log(`api/localai/speech: fetch issue: ${fetchOrVendorError}`);
     return new Response(`[Issue] elevenlabs: ${fetchOrVendorError}`, { status: 500 });
   }
 }

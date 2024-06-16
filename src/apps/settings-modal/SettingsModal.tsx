@@ -1,7 +1,25 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Button, Divider, ListItemContent, Stack, styled, Tab, tabClasses, TabList, TabPanel, Tabs } from '@mui/joy';
+import {
+  Accordion,
+  AccordionDetails,
+  accordionDetailsClasses,
+  AccordionGroup,
+  AccordionSummary,
+  accordionSummaryClasses,
+  Avatar,
+  Button,
+  Divider,
+  ListItemContent,
+  Stack,
+  styled,
+  Tab,
+  tabClasses,
+  TabList,
+  TabPanel,
+  Tabs,
+} from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
@@ -21,12 +39,13 @@ import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceSettings } from './VoiceSettings';
-
+import { TTSSettings } from '~/modules/tts/TTSSettings';
 
 // styled <AccordionGroup variant='plain'> into a Topics component
 const Topics = styled(AccordionGroup)(({ theme }) => ({
   // round and clip corners
-  borderRadius: theme.radius.md, overflow: 'hidden',
+  borderRadius: theme.radius.md,
+  overflow: 'hidden',
 
   // larger summary, with a spinning icon
   [`& .${accordionSummaryClasses.button}`]: {
@@ -45,8 +64,7 @@ const Topics = styled(AccordionGroup)(({ theme }) => ({
   },
 }));
 
-function Topic(props: { title?: string, icon?: string | React.ReactNode, startCollapsed?: boolean, children?: React.ReactNode }) {
-
+function Topic(props: { title?: string; icon?: string | React.ReactNode; startCollapsed?: boolean; children?: React.ReactNode }) {
   // state
   const [expanded, setExpanded] = React.useState(props.startCollapsed !== true);
 
@@ -66,37 +84,23 @@ function Topic(props: { title?: string, icon?: string | React.ReactNode, startCo
         },
       }}
     >
-
       {!hideTitleBar && (
-        <AccordionSummary
-          color='primary'
-          variant={expanded ? 'plain' : 'soft'}
-          indicator={<AddIcon />}
-        >
+        <AccordionSummary color="primary" variant={expanded ? 'plain' : 'soft'} indicator={<AddIcon />}>
           {!!props.icon && (
-            <Avatar
-              color='primary'
-              variant={expanded ? 'soft' : 'plain'}
-            >
+            <Avatar color="primary" variant={expanded ? 'soft' : 'plain'}>
               {props.icon}
             </Avatar>
           )}
-          <ListItemContent>
-            {props.title}
-          </ListItemContent>
+          <ListItemContent>{props.title}</ListItemContent>
         </AccordionSummary>
       )}
 
       <AccordionDetails>
-        <Stack sx={{ gap: 'calc(var(--Card-padding) / 2)', border: 'none' }}>
-          {props.children}
-        </Stack>
+        <Stack sx={{ gap: 'calc(var(--Card-padding) / 2)', border: 'none' }}>{props.children}</Stack>
       </AccordionDetails>
-
     </Accordion>
   );
 }
-
 
 const settingTaxSx: SxProps = {
   fontFamily: 'body',
@@ -109,30 +113,27 @@ const settingTaxSx: SxProps = {
  * Component that allows the User to modify the application settings,
  * persisted on the client via localStorage.
  */
-export function SettingsModal(props: {
-  open: boolean,
-  tabIndex: number,
-  onClose: () => void,
-  onOpenShortcuts: () => void,
-}) {
-
+export function SettingsModal(props: { open: boolean; tabIndex: number; onClose: () => void; onOpenShortcuts: () => void }) {
   // external state
   const isMobile = useIsMobile();
 
   return (
     <GoodModal
-      title='Preferences' strongerTitle
-      open={props.open} onClose={props.onClose}
-      startButton={isMobile ? undefined : (
-        <Button variant='soft' onClick={props.onOpenShortcuts}>
-          👉 See Shortcuts
-        </Button>
-      )}
+      title="Preferences"
+      strongerTitle
+      open={props.open}
+      onClose={props.onClose}
+      startButton={
+        isMobile ? undefined : (
+          <Button variant="soft" onClick={props.onOpenShortcuts}>
+            👉 See Shortcuts
+          </Button>
+        )
+      }
     >
-
       <Divider />
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={props.tabIndex}>
+      <Tabs aria-label="Settings tabbed menu" defaultValue={props.tabIndex}>
         <TabList
           disableUnderline
           sx={{
@@ -153,57 +154,68 @@ export function SettingsModal(props: {
             },
           }}
         >
-          <Tab disableIndicator value={PreferencesTab.Chat} sx={settingTaxSx}>Chat</Tab>
-          <Tab disableIndicator value={PreferencesTab.Voice} sx={settingTaxSx}>Voice</Tab>
-          <Tab disableIndicator value={PreferencesTab.Draw} sx={settingTaxSx}>Draw</Tab>
-          <Tab disableIndicator value={PreferencesTab.Tools} sx={settingTaxSx}>Tools</Tab>
+          <Tab disableIndicator value={PreferencesTab.Chat} sx={settingTaxSx}>
+            Chat
+          </Tab>
+          <Tab disableIndicator value={PreferencesTab.Voice} sx={settingTaxSx}>
+            Voice
+          </Tab>
+          <Tab disableIndicator value={PreferencesTab.Draw} sx={settingTaxSx}>
+            Draw
+          </Tab>
+          <Tab disableIndicator value={PreferencesTab.Tools} sx={settingTaxSx}>
+            Tools
+          </Tab>
         </TabList>
 
-        <TabPanel value={PreferencesTab.Chat} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Chat} variant="outlined" sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
             </Topic>
-            <Topic icon='🧠' title='Chat AI' startCollapsed>
+            <Topic icon="🧠" title="Chat AI" startCollapsed>
               <AppChatSettingsAI />
             </Topic>
-            <Topic icon={<ScienceIcon />} title='Labs' startCollapsed>
+            <Topic icon={<ScienceIcon />} title="Labs" startCollapsed>
               <UxLabsSettings />
             </Topic>
           </Topics>
         </TabPanel>
 
-        <TabPanel value={PreferencesTab.Voice} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Voice} variant="outlined" sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
-            <Topic icon='🎙️' title='Voice settings'>
+            <Topic icon="🎙️" title="Voice settings">
               <VoiceSettings />
             </Topic>
-            <Topic icon='📢' title='ElevenLabs API'>
+            <Topic icon="📢" title="ElevenLabs API">
               <ElevenlabsSettings />
+            </Topic>
+            <Topic icon="📢" title="TTS">
+              <TTSSettings />
             </Topic>
           </Topics>
         </TabPanel>
 
-        <TabPanel value={PreferencesTab.Draw} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Draw} variant="outlined" sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <T2ISettings />
             </Topic>
-            <Topic icon='🖍️️' title='OpenAI DALL·E' startCollapsed>
+            <Topic icon="🖍️️" title="OpenAI DALL·E" startCollapsed>
               <DallESettings />
             </Topic>
-            <Topic icon='🖍️️' title='Prodia API' startCollapsed>
+            <Topic icon="🖍️️" title="Prodia API" startCollapsed>
               <ProdiaSettings noSkipKey />
             </Topic>
           </Topics>
         </TabPanel>
 
-        <TabPanel value={PreferencesTab.Tools} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value={PreferencesTab.Tools} variant="outlined" sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
-            <Topic icon={<SearchIcon />} title='Browsing'>
+            <Topic icon={<SearchIcon />} title="Browsing">
               <BrowseSettings />
             </Topic>
-            <Topic icon={<SearchIcon />} title='Google Search API' startCollapsed>
+            <Topic icon={<SearchIcon />} title="Google Search API" startCollapsed>
               <GoogleSearchSettings />
             </Topic>
             {/*<Topic icon='🛠' title='Other tools...' />*/}
@@ -212,7 +224,6 @@ export function SettingsModal(props: {
       </Tabs>
 
       <Divider />
-
     </GoodModal>
   );
 }

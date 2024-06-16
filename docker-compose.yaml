@@ -6,9 +6,35 @@ version: '3.9'
 
 services:
   big-agi:
-    image: ghcr.io/enricoros/big-agi:latest
+    container_name: big-agi
+    build: .
     ports:
       - "3000:3000"
     env_file:
       - .env
     command: [ "next", "start", "-p", "3000" ]
+    networks:
+      - ai
+      
+  browserless:
+    image: browserless/chrome:latest
+    env_file:
+      - .env
+    ports:
+      - "9222:3000"  # Map host's port 9222 to container's port 3000
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10
+    networks:
+      - ai
+
+  edge-tts:
+    image: herberthe0229/edge-tts-server
+    ports:
+      - "8089:8088"
+    networks:
+      - ai
+
+networks:
+  ai:
+    external: true
+      
