@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { innerVoices } from './voice';
 
 export const speechInputSchema = z.object({
   ttsKey: z.string().optional(),
@@ -39,23 +40,30 @@ export const ttsRouter = createTRPCRouter({
     .input(listVoicesInputSchema)
     .output(listVoicesOutputSchema)
     .query(async ({ input }) => {
-      const { ttsKey } = input;
-      const { headers, url } = ttsAccess(ttsKey, '/v1/models');
+      // const { ttsKey } = input;
+      // const { headers, url } = ttsAccess(ttsKey, '/v1/models');
 
-      const voicesList = await fetchJsonOrTRPCError<{ data: TTSWire.VoicesList['voices'] }>(url, 'GET', headers, undefined, 'LocalAI');
-      const voices = voicesList.data
-        .filter((voice) => voice.id.startsWith('voice-en-us-') && !voice.id.endsWith('.gz'))
-        .map((voice, index) => ({
-          id: voice.id,
-          name: voice.id,
+      // const voicesList = await fetchJsonOrTRPCError<{ data: TTSWire.VoicesList['voices'] }>(url, 'GET', headers, undefined, 'LocalAI');
+      // const voices = voicesList.data
+      //   .filter((voice) => voice.id.startsWith('voice-en-us-') && !voice.id.endsWith('.gz'))
+      //   .map((voice, index) => ({
+      //     id: voice.id,
+      //     name: voice.id,
+      //     description: '',
+      //     previewUrl: '',
+      //     category: '',
+      //     default: voice.id === 'voice-en-us-ryan-medium',
+      //   }));
+
+      return {
+        voices: innerVoices.map((voice) => ({
+          id: voice,
+          name: voice,
           description: '',
           previewUrl: '',
           category: '',
-          default: voice.id === 'voice-en-us-ryan-medium',
-        }));
-
-      return {
-        voices,
+          default: voice === 'en-US-ChristopherNeural',
+        })),
       };
     }),
 
