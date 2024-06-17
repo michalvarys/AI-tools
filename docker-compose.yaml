@@ -2,14 +2,14 @@
 #
 # For more examples, such runnin big-AGI alongside a web browsing service, see the `docs/docker` folder.
 
-version: '3.9'
+version: '3.2'
 
 services:
   big-agi:
     container_name: big-agi
     build: .
     ports:
-      - "3000:3000"
+      - "8088:3000"
     env_file:
       - .env
     command: [ "next", "start", "-p", "3000" ]
@@ -29,12 +29,84 @@ services:
 
   edge-tts:
     image: herberthe0229/edge-tts-server
+    container_name: edge-tts
     ports:
       - "8089:8088"
     networks:
       - ai
 
+  api:
+    # See https://localai.io/basics/getting_started/#container-images for
+    # a list of available container images (or build your own with the provided Dockerfile)
+    # Available images with CUDA, ROCm, SYCL
+    # Image list (quay.io): https://quay.io/repository/go-skynet/local-ai?tab=tags
+    # Image list (dockerhub): https://hub.docker.com/r/localai/localai
+    # image: quay.io/go-skynet/local-ai:master-ffmpeg-core
+    image: localai/localai:latest-aio-cpu
+    # build:
+    #   context: ./LocalAI
+    #   dockerfile: Dockerfile
+      # args:
+      # - IMAGE_TYPE=core
+      # - BASE_IMAGE=ubuntu:22.04
+    ports:
+      - 8080:8080
+    env_file:
+      - ./LocalAI/.env
+    environment:
+      - MODELS_PATH=/models
+    #  - DEBUG=true
+    volumes:
+      - ./LocalAI/models:/models:cached
+      - ./LocalAI/images/:/tmp/generated/images/
+    command:
+    # Here we can specify a list of models to run (see quickstart https://localai.io/basics/getting_started/#running-models )
+    # or an URL pointing to a YAML configuration file, for example:
+    # - https://gist.githubusercontent.com/mudler/ad601a0488b497b69ec549150d9edd18/raw/a8a8869ef1bb7e3830bf5c0bae29a0cce991ff8d/phi-2.yaml
+    - phi-2
+    networks:
+      - ai
+
+  memgpt_db:
+    image: ankane/pgvector:v0.5.1
+    networks:
+      default:
+        aliases:
+          - pgvector_db
+          - memgpt-db
+    environment:
+      - POSTGRES_USER=${MEMGPT_PG_USER}
+      - POSTGRES_PASSWORD=${MEMGPT_PG_PASSWORD}
+      - POSTGRES_DB=${MEMGPT_PG_DB}
+    volumes:
+      - ./memgpt/.persist/pgdata:/var/lib/postgresql/data
+      - ./memgpt/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5499:5432"
+  memgpt_server:
+    image: memgpt/memgpt-server:latest
+    hostname: memgpt-server
+    depends_on:
+      - memgpt_db
+    ports:
+      - "8083:8083"
+      - "8283:8283"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_URI=postgresql://${MEMGPT_PG_USER}:${MEMGPT_PG_PASSWORD}@pgvector_db:5432/${MEMGPT_PG_DB} # TODO: deprecate
+      - MEMGPT_SERVER_PASS=${MEMGPT_SERVER_PASS} # memgpt server password
+      - MEMGPT_PG_DB=${MEMGPT_PG_DB}
+      - MEMGPT_PG_USER=${MEMGPT_PG_USER}
+      - MEMGPT_PG_PASSWORD=${MEMGPT_PG_PASSWORD}
+      - MEMGPT_PG_HOST=pgvector_db
+      - MEMGPT_PG_PORT=5432
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./memgpt/configs/server_config.yaml:/root/.memgpt/config # config file
+      - ~/.memgpt/credentials:/root/.memgpt/credentials # credentials file
+
 networks:
   ai:
-    external: true
+    driver: bridge
       

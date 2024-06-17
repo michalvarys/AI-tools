@@ -19,11 +19,12 @@ export async function edgeTTSHandler(req: NextRequest) {
   try {
     // construct the upstream request
     const { input, model = 'cs-CZ-AntoninNeural' } = speechInputSchema.parse(await req.json());
-    const voice = model.startsWith('cs-CZ-') ? model : `cs-CZ-AntoninNeural`;
+    const voice = 'en-US-ChristopherNeural' //model.startsWith('cs-CZ-') ? model : `cs-CZ-AntoninNeural`;
+    const baseUrl = "https://edge-tts.varyshop.eu"
     // elevenlabs POST
     const upstreamResponse: Response = await nonTrpcServerFetchOrThrow(`http://edge-tts:8088/tts?text=${input}&voice=${voice}`, 'GET', {}, undefined);
     const { url } = await upstreamResponse.json();
-    const link = `http://edge-tts:8088${url}`;
+    const link = `https://edge-tts.varyshop.eu${url}`;
     const buffer = await fetch(link).then((res) => res.arrayBuffer());
 
     const audioReadableStream = buffer || createEmptyReadableStream();
