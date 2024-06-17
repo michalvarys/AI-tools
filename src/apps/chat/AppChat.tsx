@@ -11,8 +11,9 @@ import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { downloadConversation, openAndLoadConversations } from '~/modules/trade/trade.client';
 import { getChatLLMId, useChatLLM } from '~/modules/llms/store-llms';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { speakText as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
-import { speakText as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
+// import { speakText as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
+// import { speakText as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
+import { speakText } from '~/modules/tts/tts.client';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
@@ -100,7 +101,7 @@ export function AppChat() {
   const showAltTitleBar = useUXLabsStore((state) => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
 
   const { openLlmOptions, openModelsSetup, openPreferencesTab } = useOptimaLayout();
-  const speakText = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
+  // const speakText = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
 
   const { chatLLM } = useChatLLM();
 

@@ -4,9 +4,10 @@ import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions'
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
-import { speakText as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
-import { speakText as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
-const speakText = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
+// import { speakText as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.c;lient';
+// import { speakText as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
+// const speakText = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
+import { speakText } from '~/modules/tts/tts.client';
 
 import type { DMessage } from '~/common/state/store-chats';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';

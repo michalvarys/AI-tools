@@ -187,9 +187,9 @@ export function SettingsModal(props: { open: boolean; tabIndex: number; onClose:
             <Topic icon="🎙️" title="Voice settings">
               <VoiceSettings />
             </Topic>
-            <Topic icon="📢" title="ElevenLabs API">
+            {/* <Topic icon="📢" title="ElevenLabs API">
               <ElevenlabsSettings />
-            </Topic>
+            </Topic> */}
             <Topic icon="📢" title="TTS">
               <TTSSettings />
             </Topic>

@@ -32,9 +32,10 @@ import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
 import { useAppCallStore } from './state/store-app-call';
 
-import { EXPERIMENTAL_speakTextStream as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
-import { EXPERIMENTAL_speakTextStream as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
-const EXPERIMENTAL_speakTextStream = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
+// import { EXPERIMENTAL_speakTextStream as speakTextElevenLabs } from '~/modules/elevenlabs/elevenlabs.client';
+// import { EXPERIMENTAL_speakTextStream as speakTextTTS, isTTSEnabled } from '~/modules/tts/tts.client';
+// const EXPERIMENTAL_speakTextStream = isTTSEnabled() ? speakTextTTS : speakTextElevenLabs;
+import { EXPERIMENTAL_speakTextStream } from '~/modules/tts/tts.client';
 
 function CallMenuItems(props: {
   pushToTalk: boolean;
@@ -380,17 +381,18 @@ export function Telephone(props: { callIntent: AppCallIntent; backToContacts: ()
 
         {/* [Calling] Hang / PTT (mute not enabled yet) */}
         {isConnected && <CallButton Icon={CallEndIcon} text="Hang up" color="danger" variant="soft" onClick={handleCallStop} />}
-        {isConnected &&
-          (pushToTalk ? (
-            <CallButton
-              Icon={MicIcon}
-              onClick={toggleRecording}
-              text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
-              variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'}
-              color="primary"
-              sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined}
-            />
-          ) : null)
+        {
+          isConnected &&
+            (pushToTalk ? (
+              <CallButton
+                Icon={MicIcon}
+                onClick={toggleRecording}
+                text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
+                variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'}
+                color="primary"
+                sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined}
+              />
+            ) : null)
           // <CallButton disabled={true} Icon={MicOffIcon} onClick={() => setMicMuted(muted => !muted)}
           //               text={micMuted ? 'Muted' : 'Mute'}
           //               color={micMuted ? 'warning' : undefined} variant={micMuted ? 'solid' : 'outlined'} />
